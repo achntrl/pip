@@ -131,7 +131,10 @@ class TUFDownloader:
         for pattern in self.__target_path_patterns:
             match = re.match(pattern, url)
             if match:
+                logger.debug('{} matched {}'.format(url, pattern))
                 return match.group(1)
+            else:
+                logger.debug('{} mismatched {}'.format(url, pattern))
         return None
 
     def download(self, target_relpath, dest_dir, dest_filename):
