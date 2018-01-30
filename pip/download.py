@@ -49,6 +49,8 @@ from pip._vendor.cachecontrol.caches import FileCache
 from pip._vendor.lockfile import LockError
 from pip._vendor.six.moves import xmlrpc_client
 
+from tuf.client.updater import Updater
+import tuf.settings
 
 __all__ = ['get_file_content',
            'is_url', 'url_to_path', 'path_to_url',
@@ -58,6 +60,92 @@ __all__ = ['get_file_content',
 
 
 logger = logging.getLogger(__name__)
+
+
+class TUFDownloader:
+
+    def __init__(self, path_to_tuf_config_file):
+        '''
+        This object must be given a TUF configuration file, an example of which
+        follows, and explanations of which are given in the rest of this
+        function:
+
+        {
+          "repositories_dir": "repositories",
+          "repository_dir": "repository-name",
+          "targets_dir": "repositories/repository-name/targets",
+          "target_path_patterns": ["^.*/(wheels/.*\\.whl)$"],
+          "repository_mirrors": {
+            "mirror-name": {
+              "url_prefix": "https://example.com",
+              "metadata_path": "metadata",
+              "targets_path": "targets",
+              "confined_target_dirs": [""]
+            }
+          }
+        }
+        '''
+
+        with open(path_to_tuf_config_file) as tuf_config_file:
+            tuf_config = json.load(tuf_config_file)
+
+        # NOTE: The directory where TUF metadata for *all* repositories are
+        # kept.
+        tuf.settings.repositories_directory = tuf_config['repositories_dir']
+
+        # NOTE: The directory where the targets for *this* repository is
+        # cached. Typically, it makes sense to keep this under a directory
+        # dedicated to this repository.
+        self.__targets_dir = tuf_config['targets_dir']
+
+        # NOTE: A list of TUF target path patterns to match using Python
+        # regular expressions. *ONLY* these matching targets will be downloaded
+        # using TUF from this repository. Each pattern MUST have exactly one
+        # group used to match and download the target.
+        # E.g.: ["^.*/(wheels/.*\\.whl)$"]
+        self.__target_path_patterns = tuf_config['target_path_patterns']
+
+        # NOTE: Build a TUF updater which stores metadata in (1) the given
+        # directory, and (2) uses the following mirror configuration,
+        # respectively.
+        # https://github.com/theupdateframework/tuf/blob/aa2ab218f22d8682e03c992ea98f88efd155cffd/tuf/client/updater.py#L628-L683
+        self.__updater = Updater(tuf_config['repository_dir'],
+                                 tuf_config['repository_mirrors'])
+
+    def _get_target(self, target_relpath):
+        self.__updater.refresh()
+
+        target = self.__updater.get_one_valid_targetinfo(target_relpath)
+        updated_targets = self.__updater.updated_targets((target,),
+                                                         self.__targets_dir)
+
+        # Either the target has been updated, or not at all.
+        if len(updated_targets):
+            updated_target = updated_targets[0]
+            self.__updater.download_target(updated_target, self.__targets_dir)
+
+        target_path = os.path.join(self.__targets_dir, target_relpath)
+        return target_path
+
+    def match(self, url):
+        for pattern in self.__target_path_patterns:
+            match = re.match(pattern, url)
+            if match:
+                return match.group(1)
+        return None
+
+    def download(self, target_relpath, dest_dir, dest_filename):
+        target_path = self._get_target(target_relpath)
+        from_path = os.path.join(dest_dir, dest_filename)
+        shutil.copyfile(target_path, from_path)
+        content_type = mimetypes.guess_type(target_relpath)
+        return from_path, content_type
+
+
+if 'TUF_CONFIG_FILE' in os.environ:
+    tuf_downloader = TUFDownloader(os.environ['TUF_CONFIG_FILE'])
+else:
+    tuf_downloader = None
 
 
 def user_agent():
@@ -652,11 +740,19 @@ def unpack_http_url(link, location, download_dir=None,
         from_path = already_downloaded_path
         content_type = mimetypes.guess_type(from_path)[0]
     else:
-        # let's download to a tmp dir
-        from_path, content_type = _download_http_url(link,
-                                                     session,
-                                                     temp_dir,
-                                                     hashes)
+	target_relpath = tuf_downloader and tuf_downloader.match(link.url)
+
+	if target_relpath:
+	    from_path, content_type = \
+				   tuf_downloader.download(target_relpath,
+							   temp_dir,
+							   link.filename)
+	else:
+	    # let's download to a tmp dir
+	    from_path, content_type = _download_http_url(link,
+							 session,
+							 temp_dir,
+							 hashes)
 
     # unpack the archive to the build dir location. even when only downloading
     # archives, they have to be unpacked to parse dependencies
