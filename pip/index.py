@@ -27,7 +27,9 @@ from pip.exceptions import (
     DistributionNotFound, BestVersionAlreadyInstalled, InvalidWheelFilename,
     UnsupportedWheel,
 )
-from pip.download import HAS_TLS, is_url, path_to_url, url_to_path
+from pip.download import (
+    HAS_TLS, is_url, path_to_url, url_to_path, tuf_downloader
+)
 from pip.wheel import Wheel, wheel_ext
 from pip.pep425tags import get_supported
 from pip._vendor import html5lib, requests, six
@@ -712,6 +714,9 @@ def egg_info_matches(
         return None
 
 
+class MockResponse(object): pass
+
+
 class HTMLPage(object):
     """Represents one page, along with its URL"""
 
@@ -785,14 +790,32 @@ class HTMLPage(object):
                 url = urllib_parse.urljoin(url, 'index.html')
                 logger.debug(' file: URL is directory, getting %s', url)
 
-            resp = session.get(
-                url,
-                headers={
-                    "Accept": "text/html",
-                    "Cache-Control": "max-age=600",
-                },
-            )
-            resp.raise_for_status()
+            if tuf_downloader:
+                # NOTE: Use target_path_patterns in TUF_CONFIG_FILE to specify
+                # URLs for simple indices, like "/simple/", or "/simple/*/".
+	        target_relpath = tuf_downloader.match(url)
+                logger.debug('target_relpath: {}'.format(target_relpath))
+                # Simple sanity check.
+                assert target_relpath.endswith('/')
+                # NOTE: Why do this? Because TUF needs to be told to download a
+                # specific file.
+                target_relpath += 'index.html'
+                target_path = tuf_downloader._get_target(target_relpath)
+                # Return a mock requests.Response object.
+                resp = MockResponse()
+                with open(target_path) as target_file:
+                    resp.content = target_file.read()
+                resp.headers = {'Content-Type': 'text/html'}
+                resp.url = url
+            else:
+                resp = session.get(
+                    url,
+                    headers={
+                        "Accept": "text/html",
+                        "Cache-Control": "max-age=600",
+                    },
+                )
+                resp.raise_for_status()
 
             # The check for archives above only works if the url ends with
             # something that looks like an archive. However that is not a
