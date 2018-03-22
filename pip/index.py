@@ -793,7 +793,7 @@ class HTMLPage(object):
             if tuf_downloader:
                 # NOTE: Use target_path_patterns in TUF_CONFIG_FILE to specify
                 # URLs for simple indices, like "/simple/", or "/simple/*/".
-	        target_relpath = tuf_downloader.match(url)
+                target_relpath = tuf_downloader.match(url)
                 logger.debug('target_relpath: {}'.format(target_relpath))
                 # Simple sanity check.
                 assert target_relpath.endswith('/')
