@@ -57,7 +57,7 @@ from pip._vendor.urllib3.exceptions import InsecureRequestWarning
 import pip.cmdoptions
 cmdoptions = pip.cmdoptions
 
-__version__ = "9.0.2.tuf1"
+__version__ = "9.0.2.tuf2"
 
 
 logger = logging.getLogger(__name__)
