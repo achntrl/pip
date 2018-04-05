@@ -90,4 +90,5 @@ setup(
         'testing': tests_require,
     },
     cmdclass={'test': PyTest},
+    install_requires=['tuf', 'in-toto'],
 )
