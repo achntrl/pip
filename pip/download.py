@@ -117,6 +117,11 @@ class TUFDownloader:
         self.__updater = Updater(tuf_config['repository_dir'],
                                  tuf_config['repository_mirrors'])
 
+        # NOTE: A flag, False by default, to signal whether we should download
+        # and verify in-toto metadata.
+        self.__DOWNLOAD_IN_TOTO_METADATA = \
+                            tuf_config.get('download_in_toto_metadata', False)
+
         # NOTE: Update to the latest top-level role metadata only ONCE, so that
         # we use the same consistent snapshot to download targets.
         self.__updater.refresh()
@@ -259,13 +264,18 @@ class TUFDownloader:
             # Next, we use in-toto to verify the supply chain of the target.
             # NOTE: We use a flag to avoid recursively downloading in-toto
             # metadata for in-toto metadata themselves, and so on ad infinitum.
+            # NOTE: We use a global flag (self.__DOWNLOAD_IN_TOTO_METADATA) for
+            # coarse-grained control, and a local flag
+            # (download_in_toto_metadata) for fine-grained control (e.g.,
+            # override global flag, even when switched on, for HTML files).
             # TODO: When it comes to HTML files, we should just verify.
             # All other files, presumably packages, should also be
             # inspected.
             # TODO: Ideally, shouldn't we check that the simple index and
             # any corresponding wheel were actually built in the same
             # pipeline run?
-            if download_in_toto_metadata and \
+            if self.__DOWNLOAD_IN_TOTO_METADATA and \
+               download_in_toto_metadata and \
                not target_relpath.endswith('.html'):
                 self.__download_and_verify_in_toto_metadata(updated_target,
                                                             target_relpath)
