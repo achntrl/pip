@@ -88,7 +88,18 @@ setup(
     python_requires='>=2.6,!=3.0.*,!=3.1.*,!=3.2.*',
     extras_require={
         'testing': tests_require,
+        # NOTE: These are the optional requirements for enabling TUF + in-toto.
+        'security': [
+            # At the time of writing (April 5 2018), these are the two latest
+            # versions of TUF and in-toto that are known to work with each
+            # other.
+            'tuf>=0.10.2',
+            'in-toto>=0.2.2',
+            # Make sure TUF and in-toto use the same version of this library,
+            # which they both use in common. At the time of writing (April 5
+            # 2018), this was the latest version of the library.
+            'securesystemslib==0.10.11',
+        ]
     },
     cmdclass={'test': PyTest},
-    install_requires=['tuf', 'in-toto'],
 )
