@@ -796,7 +796,7 @@ class HTMLPage(object):
                 target_relpath = tuf_downloader.match(url)
                 logger.debug('target_relpath: {}'.format(target_relpath))
                 # Simple sanity check.
-                assert target_relpath.endswith('/')
+                assert target_relpath and target_relpath.endswith('/')
                 # NOTE: Why do this? Because TUF needs to be told to download a
                 # specific file.
                 target_relpath += 'index.html'

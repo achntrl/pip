@@ -51,6 +51,7 @@ from pip._vendor.lockfile import LockError
 from pip._vendor.six.moves import xmlrpc_client
 
 from tuf.client.updater import Updater
+import certifi
 import tuf.settings
 
 from in_toto import verifylib
@@ -97,6 +98,9 @@ class TUFDownloader:
         # NOTE: The directory where TUF metadata for *all* repositories are
         # kept.
         tuf.settings.repositories_directory = tuf_config['repositories_dir']
+
+        # NOTE: Tell TUF where SSL certificates are kept.
+        tuf.settings.ssl_certificates = certifi.where()
 
         # NOTE: The directory where the targets for *this* repository is
         # cached. Typically, it makes sense to keep this under a directory
