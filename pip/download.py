@@ -103,9 +103,11 @@ class TUFDownloader:
         tuf.settings.ssl_certificates = certifi.where()
 
         # NOTE: The directory where the targets for *this* repository is
-        # cached. Typically, it makes sense to keep this under a directory
-        # dedicated to this repository.
-        self.__targets_dir = tuf_config['targets_dir']
+        # cached. We hard-code this keep this to a subdirectory dedicated to
+        # this repository.
+        self.__targets_dir = os.path.join(tuf_config['repositories_dir'],
+                                          tuf_config['repository_dir'],
+                                          'targets')
 
         # NOTE: A list of TUF target path patterns to match using Python
         # regular expressions. *ONLY* these matching targets will be downloaded
