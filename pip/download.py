@@ -50,14 +50,6 @@ from pip._vendor.cachecontrol.caches import FileCache
 from pip._vendor.lockfile import LockError
 from pip._vendor.six.moves import xmlrpc_client
 
-from tuf.client.updater import Updater
-import certifi
-import tuf.settings
-
-from in_toto import verifylib
-from in_toto.models.metadata import Metablock
-from in_toto.util import import_rsa_public_keys_from_files_as_dict
-
 __all__ = ['get_file_content',
            'is_url', 'url_to_path', 'path_to_url',
            'is_archive_file', 'unpack_vcs_link',
@@ -311,6 +303,14 @@ class TUFDownloader:
 
 
 if 'TUF_CONFIG_FILE' in os.environ:
+    import certifi
+    import tuf.settings
+
+    from in_toto import verifylib
+    from in_toto.models.metadata import Metablock
+    from in_toto.util import import_rsa_public_keys_from_files_as_dict
+    from tuf.client.updater import Updater
+
     tuf_downloader = TUFDownloader(os.environ['TUF_CONFIG_FILE'])
 else:
     tuf_downloader = None
