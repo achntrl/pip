@@ -93,7 +93,7 @@ setup(
             # At the time of writing (April 13 2018), these are the two latest
             # versions of TUF and in-toto that are known to work with each
             # other.
-            'tuf==0.11.dev0',
+            'tuf>=0.11.dev0',
             'in-toto>=0.2.2',
             # Make sure TUF and in-toto use the same version of this library,
             # which they both use in common. At the time of writing (April 13
