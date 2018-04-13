@@ -1,5 +1,0 @@
-certifi>=2018.1.18
-subprocess32==3.5.0rc1
-securesystemslib==0.10.11
--e git://github.com/theupdateframework/tuf.git@develop#egg=tuf>=0.10.2
--e git://github.com/in-toto/in-toto.git@develop#egg=in-toto>=0.2.2
