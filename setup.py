@@ -88,15 +88,15 @@ setup(
         'testing': tests_require,
         # NOTE: These are the optional requirements for enabling TUF + in-toto.
         'tuf-in-toto': [
-            # At the time of writing (April 13 2018), these are the two latest
+            # At the time of writing (May 1 2018), these are the two latest
             # versions of TUF and in-toto that are known to work with each
             # other.
-            'tuf>=0.11.dev0',
+            'tuf>=0.11.0',
             'in-toto>=0.2.2',
             # Make sure TUF and in-toto use the same version of this library,
-            # which they both use in common. At the time of writing (April 13
+            # which they both use in common. At the time of writing (May 1
             # 2018), this was the latest version of the library.
-            'securesystemslib>=0.11.0',
+            'securesystemslib>=0.11.1',
             # SSL certificates for TUF to talk to custom domains over TLS.
             'certifi>=2018.1.18',
             # in-toto needs this for Python 2.
