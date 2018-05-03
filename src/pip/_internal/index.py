@@ -812,16 +812,19 @@ class HTMLPage(object):
                 url = urllib_parse.urljoin(url, 'index.html')
                 logger.debug(' file: URL is directory, getting %s', url)
 
-            if tuf_downloader:
-                # NOTE: Use target_path_patterns in TUF_CONFIG_FILE to specify
-                # URLs for simple indices, like "/simple/", or "/simple/*/".
-                target_relpath = tuf_downloader.match(url)
+            # NOTE: Why do this? Because pip depends on the server to redirect
+            # /simple/ to /simple/index.html, whereas TUF needs to be
+            # instructed to download specifically the later.
+            # Use target_path_patterns in TUF_CONFIG_FILE to specify URLs
+            # for simple indices, like "/simple/", or "/simple/*/".
+            # Make sure that "index.html" has not already been appended!
+            target_relpath = tuf_downloader and tuf_downloader.match(url)
+
+            if target_relpath:
                 logger.debug('target_relpath: {}'.format(target_relpath))
                 # Simple sanity check.
-                assert target_relpath and target_relpath.endswith('/')
-                # NOTE: Why do this? Because TUF needs to be told to download a
-                # specific file.
-                target_relpath += 'index.html'
+                assert not target_relpath.endswith('index.html')
+                target_relpath = os.path.join(target_relpath, 'index.html')
                 target_path = tuf_downloader._get_target(target_relpath)
                 # Return a mock requests.Response object.
                 resp = MockResponse()
