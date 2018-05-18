@@ -125,6 +125,18 @@ class TUFDownloader:
         self.__DOWNLOAD_IN_TOTO_METADATA = \
                             tuf_config.get('download_in_toto_metadata', False)
 
+        # NOTE: A module with a function that substitutes parameters for
+        # in-toto inspections. The function is expected to be called
+        # "substitute", and takes one parameter, target_relpath, that specifies
+        # the relative target path of the given Python package. The function is
+        # expected to return a dictionary which maps parameter names to
+        # parameter values, so that in-toto can substitute these parameters in
+        # order to perform a successful inspection.
+        if self.__DOWNLOAD_IN_TOTO_METADATA:
+            # The module is expected to live here.
+            from pip._internal.parameters import substitute
+            self.__substitute_parameters = substitute
+
         # NOTE: Update to the latest top-level role metadata only ONCE, so that
         # we use the same consistent snapshot to download targets.
         self.__updater.refresh()
@@ -217,15 +229,19 @@ class TUFDownloader:
                 layout_key_dict = \
                              import_rsa_public_keys_from_files_as_dict(pubkeys)
                 # Verify and inspect.
-                verifylib.in_toto_verify(layout, layout_key_dict)
+                params = self.__substitute_parameters(target_relpath)
+                verifylib.in_toto_verify(layout, layout_key_dict,
+                                         substitution_parameters=params)
+                logging.info('E2E verified {}'.format(target_relpath))
         except:
             logger.exception('in-toto failed to verify {}'\
                              .format(target_relpath))
             raise
-        finally:
-            os.chdir(prev_cwd)
+        else:
             # Delete temp dir.
             shutil.rmtree(tempdir)
+        finally:
+            os.chdir(prev_cwd)
 
     def __download_and_verify_in_toto_metadata(self, updated_target,
                                                target_relpath):
