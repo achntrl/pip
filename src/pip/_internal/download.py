@@ -226,10 +226,8 @@ class TUFDownloader:
                 # Load the layout and public keys.
                 layout = Metablock.load(layout_relpath)
                 pubkeys = glob.glob('*.pub')
-                # FIXME: Don't hardcode this to neither RSA nor Ed25519. Sniff
-                # from keytype.
                 layout_key_dict = \
-                         import_ed25519_public_keys_from_files_as_dict(pubkeys)
+                             import_rsa_public_keys_from_files_as_dict(pubkeys)
                 # Verify and inspect.
                 params = self.__substitute_parameters(target_relpath)
                 verifylib.in_toto_verify(layout, layout_key_dict,
@@ -333,7 +331,7 @@ if 'TUF_CONFIG_FILE' in os.environ:
 
     from in_toto import verifylib
     from in_toto.models.metadata import Metablock
-    from in_toto.util import import_ed25519_public_keys_from_files_as_dict
+    from in_toto.util import import_rsa_public_keys_from_files_as_dict
     from tuf.client.updater import Updater
 
     tuf_downloader = TUFDownloader(os.environ['TUF_CONFIG_FILE'])
