@@ -96,10 +96,13 @@ class TUFDownloader:
 
         # NOTE: The directory where TUF metadata for *all* repositories are
         # kept.
-        tuf.settings.repositories_directory = os.path.join(
-            os.path.dirname(path_to_tuf_config_file),
-            tuf_config['repositories_dir']
-        )
+        if os.path.is_abs(tuf_config['repositories_dir']):
+            tuf.settings.repositories_directory = tuf_config['repositories_dir']
+        else:
+            tuf.settings.repositories_directory = os.path.join(
+                os.path.dirname(path_to_tuf_config_file),
+                tuf_config['repositories_dir']
+            )
 
         # NOTE: Tell TUF where SSL certificates are kept.
         tuf.settings.ssl_certificates = certifi.where()
@@ -108,8 +111,7 @@ class TUFDownloader:
         # NOTE: The directory where the targets for *this* repository is
         # cached. We hard-code this keep this to a subdirectory dedicated to
         # this repository.
-        self.__targets_dir = os.path.join(os.path.dirname(path_to_tuf_config_file),
-                                          tuf_config['repositories_dir'],
+        self.__targets_dir = os.path.join(tuf.settings.repositories_directory,
                                           tuf_config['repository_dir'],
                                           'targets')
 
