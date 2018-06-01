@@ -91,17 +91,27 @@ class TUFDownloader:
         with open(path_to_tuf_config_file) as tuf_config_file:
             tuf_config = json.load(tuf_config_file)
 
+        # Reconfigure TUF logging, we can use the pip log output
+        tuf.settings.ENABLE_FILE_LOGGING = tuf_config.get('enable_logging', False)
+
         # NOTE: The directory where TUF metadata for *all* repositories are
         # kept.
-        tuf.settings.repositories_directory = tuf_config['repositories_dir']
+        if os.path.is_abs(tuf_config['repositories_dir']):
+            tuf.settings.repositories_directory = tuf_config['repositories_dir']
+        else:
+            tuf.settings.repositories_directory = os.path.join(
+                os.path.dirname(path_to_tuf_config_file),
+                tuf_config['repositories_dir']
+            )
 
         # NOTE: Tell TUF where SSL certificates are kept.
         tuf.settings.ssl_certificates = certifi.where()
 
+
         # NOTE: The directory where the targets for *this* repository is
         # cached. We hard-code this keep this to a subdirectory dedicated to
         # this repository.
-        self.__targets_dir = os.path.join(tuf_config['repositories_dir'],
+        self.__targets_dir = os.path.join(tuf.settings.repositories_directory,
                                           tuf_config['repository_dir'],
                                           'targets')
 
@@ -164,6 +174,7 @@ class TUFDownloader:
 if 'TUF_CONFIG_FILE' in os.environ:
     import certifi
     import tuf.settings
+    tuf.settings.ENABLE_FILE_LOGGING = False
 
     from tuf.client.updater import Updater
 
