@@ -96,7 +96,7 @@ class TUFDownloader:
 
         # NOTE: The directory where TUF metadata for *all* repositories are
         # kept.
-        if os.path.is_abs(tuf_config['repositories_dir']):
+        if os.path.isabs(tuf_config['repositories_dir']):
             tuf.settings.repositories_directory = tuf_config['repositories_dir']
         else:
             tuf.settings.repositories_directory = os.path.join(
