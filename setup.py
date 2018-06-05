@@ -88,12 +88,12 @@ setup(
         'testing': tests_require,
         # NOTE: These are the optional requirements for enabling TUF.
         'tuf': [
-            # At the time of writing (May 1 2018), this was the latest version
+            # At the time of writing (Jun 5 2018), this was the latest version
             # of these libraries.
-            'tuf>=0.11.0',
-            'securesystemslib>=0.11.1',
+            'tuf >= 0.12.dev0',
+            'securesystemslib [crypto] >= 0.11.2',
             # SSL certificates for TUF to talk to custom domains over TLS.
-            'certifi>=2018.4.16',
+            'certifi >= 2018.4.16',
         ]
     },
 )
