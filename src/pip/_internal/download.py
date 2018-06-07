@@ -74,6 +74,7 @@ class TUFDownloader:
         function:
 
         {
+          "enable_logging": true,
           "repositories_dir": "repositories",
           "repository_dir": "repository-name",
           "target_path_patterns": ["^.*/(wheels/.*\\.whl)$"],
@@ -91,13 +92,20 @@ class TUFDownloader:
         with open(path_to_tuf_config_file) as tuf_config_file:
             tuf_config = json.load(tuf_config_file)
 
-        # Reconfigure TUF logging, we can use the pip log output
-        tuf.settings.ENABLE_FILE_LOGGING = tuf_config.get('enable_logging', False)
+        # NOTE: By default, we turn off TUF logging, and use the pip log
+        # instead. You may turn toggle this behaviour using this flag.
+        tuf.settings.ENABLE_FILE_LOGGING = tuf_config.get('enable_logging',
+                                                          False)
 
         # NOTE: The directory where TUF metadata for *all* repositories are
         # kept.
+        # If it is an absolute directory, then we will use that directly.
         if os.path.isabs(tuf_config['repositories_dir']):
-            tuf.settings.repositories_directory = tuf_config['repositories_dir']
+            tuf.settings.repositories_directory = \
+                                                tuf_config['repositories_dir']
+        # Otherwise, if it is a relative directory, then we will assume that
+        # it is stored *UNDER* the directory containing the TUF configuration
+        # file itself.
         else:
             tuf.settings.repositories_directory = os.path.join(
                 os.path.dirname(path_to_tuf_config_file),
@@ -106,7 +114,6 @@ class TUFDownloader:
 
         # NOTE: Tell TUF where SSL certificates are kept.
         tuf.settings.ssl_certificates = certifi.where()
-
 
         # NOTE: The directory where the targets for *this* repository is
         # cached. We hard-code this keep this to a subdirectory dedicated to
@@ -174,6 +181,10 @@ class TUFDownloader:
 if 'TUF_CONFIG_FILE' in os.environ:
     import certifi
     import tuf.settings
+
+    # NOTE: By default, we turn off TUF logging, and use the pip log instead.
+    # You may turn toggle this behaviour using the "enable_logging" flag in the
+    # TUF configuration file.
     tuf.settings.ENABLE_FILE_LOGGING = False
 
     from tuf.client.updater import Updater
