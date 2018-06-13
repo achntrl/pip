@@ -133,6 +133,9 @@ class TUFDownloader:
         # directory, and (2) uses the following mirror configuration,
         # respectively.
         # https://github.com/theupdateframework/tuf/blob/aa2ab218f22d8682e03c992ea98f88efd155cffd/tuf/client/updater.py#L628-L683
+        # NOTE: This updater will store files under:
+        # os.path.join(tuf.settings.repositories_directory,
+        #              tuf_config['repository_dir'])
         self.__updater = Updater(tuf_config['repository_dir'],
                                  tuf_config['repository_mirrors'])
 
