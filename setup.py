@@ -89,8 +89,10 @@ setup(
         # NOTE: These are the optional requirements for enabling TUF.
         'tuf': [
             # At the time of writing (Jun 13 2018), this was the latest version
-            # of these libraries.
-            'tuf >= 0.12.dev1',
+            # of these libraries. We also constraint pip to install the stable,
+            # backwards-compatible release line of TUF (0.x.y), and never the
+            # experimental, backwards-incompatible release line (1.p.q).
+            'tuf >= 0.12.dev1, < 1.0.0',
             'securesystemslib [crypto] >= 0.11.2',
             # SSL certificates for TUF to talk to custom domains over TLS.
             'certifi >= 2018.4.16',
