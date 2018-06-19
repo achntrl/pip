@@ -92,11 +92,6 @@ class TUFDownloader:
         with open(path_to_tuf_config_file) as tuf_config_file:
             tuf_config = json.load(tuf_config_file)
 
-        # NOTE: By default, we turn off TUF logging, and use the pip log
-        # instead. You may turn toggle this behaviour using this flag.
-        tuf.settings.ENABLE_FILE_LOGGING = tuf_config.get('enable_logging',
-                                                          False)
-
         # NOTE: The directory where TUF metadata for *all* repositories are
         # kept.
         # If it is an absolute directory, then we will use that directly.
@@ -114,6 +109,17 @@ class TUFDownloader:
 
         # NOTE: Tell TUF where SSL certificates are kept.
         tuf.settings.ssl_certificates = certifi.where()
+
+        # NOTE: By default, we turn off TUF logging, and use the pip log
+        # instead. You may turn toggle this behaviour using this flag.
+        enable_logging = tuf_config.get('enable_logging', False)
+
+        if enable_logging:
+            # https://github.com/theupdateframework/tuf/pull/749
+            log_filename = os.path.join(tuf.settings.repositories_directory,
+                                        tuf_config['repository_dir'],
+                                        'tuf.log')
+            tuf.log.enable_file_logging(log_filename)
 
         # NOTE: The directory where the targets for *this* repository is
         # cached. We hard-code this keep this to a subdirectory dedicated to
