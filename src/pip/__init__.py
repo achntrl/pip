@@ -1,1 +1,1 @@
-__version__ = "10.0.1.tuf"
+__version__ = "10.0.1.tuf-in-toto"
