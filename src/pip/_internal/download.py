@@ -74,7 +74,7 @@ class TUFDownloader:
         function:
 
         {
-          "enable_logging": true,
+          "enable_logging": false,
           "repositories_dir": "repositories",
           "repository_dir": "repository-name",
           "target_path_patterns": ["^.*/(wheels/.*\\.whl)$"],
@@ -111,8 +111,11 @@ class TUFDownloader:
         tuf.settings.ssl_certificates = certifi.where()
 
         # NOTE: By default, we turn off TUF logging, and use the pip log
-        # instead. You may turn toggle this behaviour using this flag.
-        enable_logging = tuf_config.get('enable_logging', False)
+        # instead. You may turn toggle this behaviour using this flag in the
+        # TUF configuration file. Alternatively, you may also toggle this
+        # behaviour using an environment variable (TUF_ENABLE_LOGGING).
+        enable_logging = tuf_config.get('enable_logging', False) or \
+                         os.environ.get('TUF_ENABLE_LOGGING', False)
 
         if enable_logging:
             # https://github.com/theupdateframework/tuf/pull/749
