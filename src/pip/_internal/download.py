@@ -64,6 +64,147 @@ __all__ = ['get_file_content',
 logger = logging.getLogger(__name__)
 
 
+class TUFDownloader:
+
+    def __init__(self, path_to_tuf_config_file):
+        '''
+        This object must be given a TUF configuration file, an example of which
+        follows, and explanations of which are given in the rest of this
+        function:
+
+        {
+          "enable_logging": false,
+          "repositories_dir": "repositories",
+          "repository_dir": "repository-name",
+          "target_path_patterns": ["^.*/(wheels/.*\\.whl)$"],
+          "repository_mirrors": {
+            "mirror-name": {
+              "url_prefix": "https://example.com",
+              "metadata_path": "metadata",
+              "targets_path": "targets",
+              "confined_target_dirs": [""]
+            }
+          }
+        }
+        '''
+
+        with open(path_to_tuf_config_file) as tuf_config_file:
+            tuf_config = json.load(tuf_config_file)
+
+        # NOTE: The directory where TUF metadata for *all* repositories are
+        # kept.
+        # If it is an absolute directory, then we will use that directly.
+        if os.path.isabs(tuf_config['repositories_dir']):
+            tuf.settings.repositories_directory = \
+                                                tuf_config['repositories_dir']
+        # Otherwise, if it is a relative directory, then we will assume that
+        # it is stored *UNDER* the directory containing the TUF configuration
+        # file itself.
+        else:
+            tuf.settings.repositories_directory = os.path.join(
+                os.path.dirname(path_to_tuf_config_file),
+                tuf_config['repositories_dir']
+            )
+
+        # NOTE: Tell TUF where SSL certificates are kept.
+        tuf.settings.ssl_certificates = certifi.where()
+
+        # NOTE: By default, we turn off TUF logging, and use the pip log
+        # instead. You may turn toggle this behaviour using this flag in the
+        # TUF configuration file. Alternatively, you may also toggle this
+        # behaviour using an environment variable (TUF_ENABLE_LOGGING).
+        enable_logging = tuf_config.get('enable_logging', False) or \
+                         os.environ.get('TUF_ENABLE_LOGGING', False)
+
+        if enable_logging:
+            # https://github.com/theupdateframework/tuf/pull/749
+            log_filename = os.path.join(tuf.settings.repositories_directory,
+                                        tuf_config['repository_dir'],
+                                        'tuf.log')
+            tuf.log.enable_file_logging(log_filename)
+
+        # NOTE: The directory where the targets for *this* repository is
+        # cached. We hard-code this keep this to a subdirectory dedicated to
+        # this repository.
+        self.__targets_dir = os.path.join(tuf.settings.repositories_directory,
+                                          tuf_config['repository_dir'],
+                                          'targets')
+
+        # NOTE: A list of TUF target path patterns to match using Python
+        # regular expressions. *ONLY* these matching targets will be downloaded
+        # using TUF from this repository. Each pattern MUST have exactly one
+        # group used to match and download the target.
+        # E.g.: ["^.*/(wheels/.*\\.whl)$"]
+        self.__target_path_patterns = tuf_config['target_path_patterns']
+
+        # NOTE: Build a TUF updater which stores metadata in (1) the given
+        # directory, and (2) uses the following mirror configuration,
+        # respectively.
+        # https://github.com/theupdateframework/tuf/blob/aa2ab218f22d8682e03c992ea98f88efd155cffd/tuf/client/updater.py#L628-L683
+        # NOTE: This updater will store files under:
+        # os.path.join(tuf.settings.repositories_directory,
+        #              tuf_config['repository_dir'])
+        self.__updater = Updater(tuf_config['repository_dir'],
+                                 tuf_config['repository_mirrors'])
+
+        # NOTE: Update to the latest top-level role metadata only ONCE, so that
+        # we use the same consistent snapshot to download targets.
+        self.__updater.refresh()
+
+    def _get_target(self, target_relpath):
+        target = self.__updater.get_one_valid_targetinfo(target_relpath)
+        updated_targets = self.__updater.updated_targets((target,),
+                                                         self.__targets_dir)
+
+        # Either the target has not been updated...
+        if not len(updated_targets):
+            logger.info('{} has not been updated'\
+                        .format(target_relpath))
+
+        # or, it has been updated, in which case...
+        else:
+            # First, we use TUF to download and verify the target.
+            assert len(updated_targets) == 1
+            updated_target = updated_targets[0]
+            self.__updater.download_target(updated_target, self.__targets_dir)
+
+        target_path = os.path.join(self.__targets_dir, target_relpath)
+        return target_path
+
+    def match(self, url):
+        for pattern in self.__target_path_patterns:
+            match = re.match(pattern, url)
+            if match:
+                logger.debug('{} matched {}'.format(url, pattern))
+                return match.group(1)
+            else:
+                logger.debug('{} mismatched {}'.format(url, pattern))
+        return None
+
+    def download(self, target_relpath, dest_dir, dest_filename):
+        target_path = self._get_target(target_relpath)
+        from_path = os.path.join(dest_dir, dest_filename)
+        shutil.copyfile(target_path, from_path)
+        content_type = mimetypes.guess_type(target_relpath)
+        return from_path, content_type
+
+
+if 'TUF_CONFIG_FILE' in os.environ:
+    import certifi
+    import tuf.settings
+
+    # NOTE: By default, we turn off TUF logging, and use the pip log instead.
+    # You may turn toggle this behaviour using the "enable_logging" flag in the
+    # TUF configuration file.
+    tuf.settings.ENABLE_FILE_LOGGING = False
+
+    from tuf.client.updater import Updater
+
+    tuf_downloader = TUFDownloader(os.environ['TUF_CONFIG_FILE'])
+else:
+    tuf_downloader = None
+
+
 def user_agent():
     """
     Return a string representing the user agent.
@@ -665,12 +806,20 @@ def unpack_http_url(link, location, download_dir=None,
             from_path = already_downloaded_path
             content_type = mimetypes.guess_type(from_path)[0]
         else:
-            # let's download to a tmp dir
-            from_path, content_type = _download_http_url(link,
-                                                         session,
-                                                         temp_dir.path,
-                                                         hashes,
-                                                         progress_bar)
+            target_relpath = tuf_downloader and tuf_downloader.match(link.url)
+
+            if target_relpath:
+                from_path, content_type = \
+                                       tuf_downloader.download(target_relpath,
+                                                               temp_dir.path,
+                                                               link.filename)
+            else:
+                # let's download to a tmp dir
+                from_path, content_type = _download_http_url(link,
+                                                             session,
+                                                             temp_dir.path,
+                                                             hashes,
+                                                             progress_bar)
 
         # unpack the archive to the build dir location. even when only
         # downloading archives, they have to be unpacked to parse dependencies

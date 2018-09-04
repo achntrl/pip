@@ -79,4 +79,18 @@ setup(
 
     zip_safe=False,
     python_requires='>=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*',
+    extras_require={
+        'testing': tests_require,
+        # NOTE: These are the optional requirements for enabling TUF.
+        'tuf': [
+            # At the time of writing (Jun 19 2018), this was the latest version
+            # of these libraries. We also constraint pip to install only the
+            # latest, stable, backwards-compatible release line of TUF
+            # (0.11.x).
+            'tuf >= 0.11.1, < 0.12',
+            'securesystemslib [crypto, pynacl] >= 0.11.2',
+            # SSL certificates for TUF to talk to custom domains over TLS.
+            'certifi >= 2018.4.16',
+        ]
+    },
 )

@@ -21,7 +21,9 @@ from pip._vendor.six.moves.urllib import parse as urllib_parse
 from pip._vendor.six.moves.urllib import request as urllib_request
 
 from pip._internal.compat import ipaddress
-from pip._internal.download import HAS_TLS, is_url, path_to_url, url_to_path
+from pip._internal.download import (
+    HAS_TLS, is_url, path_to_url, url_to_path, tuf_downloader
+)
 from pip._internal.exceptions import (
     BestVersionAlreadyInstalled, DistributionNotFound, InvalidWheelFilename,
     UnsupportedWheel,
@@ -744,6 +746,9 @@ def egg_info_matches(
         return None
 
 
+class MockResponse(object): pass
+
+
 class HTMLPage(object):
     """Represents one page, along with its URL"""
 
@@ -817,14 +822,35 @@ class HTMLPage(object):
                 url = urllib_parse.urljoin(url, 'index.html')
                 logger.debug(' file: URL is directory, getting %s', url)
 
-            resp = session.get(
-                url,
-                headers={
-                    "Accept": "text/html",
-                    "Cache-Control": "max-age=600",
-                },
-            )
-            resp.raise_for_status()
+            # NOTE: Why do this? Because pip depends on the server to redirect
+            # /simple/ to /simple/index.html, whereas TUF needs to be
+            # instructed to download specifically the later.
+            # Use target_path_patterns in TUF_CONFIG_FILE to specify URLs
+            # for simple indices, like "/simple/", or "/simple/*/".
+            # Make sure that "index.html" has not already been appended!
+            target_relpath = tuf_downloader and tuf_downloader.match(url)
+
+            if target_relpath:
+                logger.debug('target_relpath: {}'.format(target_relpath))
+                # Simple sanity check.
+                assert not target_relpath.endswith('index.html')
+                target_relpath = os.path.join(target_relpath, 'index.html')
+                target_path = tuf_downloader._get_target(target_relpath)
+                # Return a mock requests.Response object.
+                resp = MockResponse()
+                with open(target_path) as target_file:
+                    resp.content = target_file.read()
+                resp.headers = {'Content-Type': 'text/html'}
+                resp.url = url
+            else:
+                resp = session.get(
+                    url,
+                    headers={
+                        "Accept": "text/html",
+                        "Cache-Control": "max-age=600",
+                    },
+                )
+                resp.raise_for_status()
 
             # The check for archives above only works if the url ends with
             # something that looks like an archive. However that is not a
