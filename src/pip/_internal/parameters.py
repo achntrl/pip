@@ -15,6 +15,10 @@ def substitute(target_relpath):
                                         "datadog_checks_dev",
                                         "datadog_checks_tests_helper" ]):
         package_github_dir = wheel_distribution_name
+    # FIXME: This is the only other package at the time of writing (Sep 7 2018)
+    # that does not replace `-` with `_`.
+    elif wheel_distribution_name == 'datadog_go_metro':
+        package_github_dir = 'go-metro'
     else:
         package_github_dir = wheel_distribution_name[8:]
 
