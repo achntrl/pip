@@ -124,6 +124,10 @@ class TUFDownloader:
                                         'tuf.log')
             tuf.log.enable_file_logging(log_filename)
 
+            # Also set verbose, non-quiet in-toto logging.
+            # https://github.com/in-toto/in-toto/blob/8eb8eab8c94f47e67a24b5e7d56f4519092dd9d2/in_toto/in_toto_verify.py#L205
+            logging.getLogger("in_toto").setLevelVerboseOrQuiet(True, False)
+
         # NOTE: The directory where the targets for *this* repository is
         # cached. We hard-code this keep this to a subdirectory dedicated to
         # this repository.
