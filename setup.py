@@ -83,20 +83,16 @@ setup(
     extras_require={
         # NOTE: These are the optional requirements for enabling TUF + in-toto.
         'tuf-in-toto': [
-            # At the time of writing (Sep 21 2018), this was the latest version
+            # At the time of writing (Oct 3 2018), this was the latest version
             # of these libraries. We also constraint pip to install only the
             # latest, stable, backwards-compatible release line of TUF
             # (0.11.x).
-            'tuf >= 0.11.1, < 0.12',
-            'in-toto >= 0.2.3.dev4, < 0.3',
+            'tuf >= 0.11.2.dev1, < 0.12',
+            'in-toto >= 0.2.3.dev4, < 0.2.3.dev5',
             # Make sure TUF and in-toto use the same version of this library,
-            # which they both use in common. At the time of writing (Jul 13
+            # which they both use in common. At the time of writing (Oct 3
             # 2018), this was the latest version of the library.
-            'securesystemslib [crypto, pynacl] >= 0.11.2, < 0.12',
-            # SSL certificates for TUF to talk to custom domains over TLS.
-            'certifi >= 2018.8.24',
-            # in-toto needs this for Python 2.
-            'subprocess32 >= 3.5.2',
+            'securesystemslib [crypto, pynacl] >= 0.11.3, < 0.12',
         ]
     },
 )

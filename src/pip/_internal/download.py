@@ -107,9 +107,6 @@ class TUFDownloader:
                 tuf_config['repositories_dir']
             )
 
-        # NOTE: Tell TUF where SSL certificates are kept.
-        tuf.settings.ssl_certificates = certifi.where()
-
         # NOTE: By default, we turn off TUF logging, and use the pip log
         # instead. You may turn toggle this behaviour using this flag in the
         # TUF configuration file. Alternatively, you may also toggle this
@@ -153,9 +150,14 @@ class TUFDownloader:
                                  tuf_config['repository_mirrors'])
 
         # NOTE: A flag, False by default, to signal whether we should download
-        # and verify in-toto metadata.
+        # and verify in-toto metadata. You may turn toggle this behaviour using
+        # this flag in the TUF configuration file. Alternatively, you may also
+        # toggle this behaviour using an environment variable
+        # (TUF_DOWNLOAD_IN_TOTO_METADATA).
         self.__DOWNLOAD_IN_TOTO_METADATA = \
-                            tuf_config.get('download_in_toto_metadata', False)
+                        tuf_config.get('download_in_toto_metadata', False) or \
+                        os.environ.get('TUF_DOWNLOAD_IN_TOTO_METADATA', False)
+
 
         # NOTE: A module with a function that substitutes parameters for
         # in-toto inspections. The function is expected to be called
@@ -356,7 +358,6 @@ class TUFDownloader:
 
 
 if 'TUF_CONFIG_FILE' in os.environ:
-    import certifi
     import glob
     import tempfile
     import tuf.settings
