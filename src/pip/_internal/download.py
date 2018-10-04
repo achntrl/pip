@@ -64,6 +64,26 @@ __all__ = ['get_file_content',
 logger = logging.getLogger(__name__)
 
 
+class TUFInTotoError(Exception):
+
+    def __str__(self):
+        return "Encountered an unexpected in-toto error on top of TUF!"
+
+
+class NoInTotoLinkMetadataFound(TUFInTotoError):
+
+    def __str__(self, target_relpath):
+        return "in-toto link metadata expected, "\
+               "but not found for {}!".format(target_relpath)
+
+
+class NoInTotoRootLayoutPublicKeysFound(TUFInTotoError):
+
+    def __str__(self, target_relpath):
+        return "in-toto root layout public keys expected, "\
+               "but not found for {}!".format(target_relpath)
+
+
 class TUFDownloader:
 
     def __init__(self, path_to_tuf_config_file):
@@ -283,15 +303,14 @@ class TUFDownloader:
                                self.__download_in_toto_metadata(updated_target)
 
         if not len(in_toto_metadata_relpaths):
-            logger.warning('Skipping in-toto verification, because no '
-                           'metadata was found...')
+            raise NoInTotoLinkMetadataFound(target_relpath)
 
         else:
             pubkey_relpaths = self.__update_in_toto_layout_pubkeys()
 
             if not len(pubkey_relpaths):
-                logger.warning('Skipping in-toto verification, because no '
-                               'public keys were found...')
+                raise NoInTotoRootLayoutPublicKeysFound(target_relpath)
+
             else:
                 self.__verify_in_toto_metadata(target_relpath,
                                                in_toto_metadata_relpaths,
