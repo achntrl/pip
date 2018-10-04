@@ -66,22 +66,26 @@ logger = logging.getLogger(__name__)
 
 class TUFInTotoError(Exception):
 
+    def __init__(self, target_relpath):
+        self.target_relpath = target_relpath
+
     def __str__(self):
-        return "Encountered an unexpected in-toto error on top of TUF!"
+        return "Unexpected tuf-in-toto error for {}!"\
+               .format(self.target_relpath)
 
 
 class NoInTotoLinkMetadataFound(TUFInTotoError):
 
-    def __str__(self, target_relpath):
+    def __str__(self):
         return "in-toto link metadata expected, "\
-               "but not found for {}!".format(target_relpath)
+               "but not found for {}!".format(self.target_relpath)
 
 
 class NoInTotoRootLayoutPublicKeysFound(TUFInTotoError):
 
-    def __str__(self, target_relpath):
+    def __str__(self):
         return "in-toto root layout public keys expected, "\
-               "but not found for {}!".format(target_relpath)
+               "but not found for {}!".format(self.target_relpath)
 
 
 class TUFDownloader:
