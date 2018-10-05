@@ -296,6 +296,7 @@ class TUFDownloader:
                              .format(target_relpath))
             raise
         else:
+            os.chdir(prev_cwd)
             # Delete temp dir.
             shutil.rmtree(tempdir)
         finally:
