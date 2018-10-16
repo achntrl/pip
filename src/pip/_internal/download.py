@@ -382,12 +382,14 @@ class TUFDownloader:
 if 'TUF_CONFIG_FILE' in os.environ:
     import glob
     import tempfile
+    import tuf.log
     import tuf.settings
 
     # NOTE: By default, we turn off TUF logging, and use the pip log instead.
     # You may turn toggle this behaviour using the "enable_logging" flag in the
     # TUF configuration file.
     tuf.settings.ENABLE_FILE_LOGGING = False
+    tuf.log.remove_console_handler()
     from tuf.client.updater import Updater
 
     from in_toto import verifylib
