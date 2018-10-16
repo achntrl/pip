@@ -199,11 +199,11 @@ class TUFDownloader:
         # we use the same consistent snapshot to download targets.
         self.__updater.refresh()
 
-    def __download_in_toto_metadata(self, updated_target):
+    def __download_in_toto_metadata(self, target):
         # A list to collect where in-toto metadata targets live.
         target_relpaths = []
 
-        fileinfo = updated_target.get('fileinfo')
+        fileinfo = target.get('fileinfo')
 
         if fileinfo:
             custom = fileinfo.get('custom')
@@ -302,10 +302,8 @@ class TUFDownloader:
         finally:
             os.chdir(prev_cwd)
 
-    def __download_and_verify_in_toto_metadata(self, updated_target,
-                                               target_relpath):
-        in_toto_metadata_relpaths = \
-                               self.__download_in_toto_metadata(updated_target)
+    def __download_and_verify_in_toto_metadata(self, target, target_relpath):
+	in_toto_metadata_relpaths = self.__download_in_toto_metadata(target)
 
         if not len(in_toto_metadata_relpaths):
             raise NoInTotoLinkMetadataFound(target_relpath)
@@ -336,29 +334,29 @@ class TUFDownloader:
             # First, we use TUF to download and verify the target.
             assert len(updated_targets) == 1
             updated_target = updated_targets[0]
+	    assert updated_target == target
             self.__updater.download_target(updated_target, self.__targets_dir)
 
-            # Next, we use in-toto to verify the supply chain of the target.
-            # NOTE: We use a flag to avoid recursively downloading in-toto
-            # metadata for in-toto metadata themselves, and so on ad infinitum.
-            # NOTE: We use a global flag (self.__DOWNLOAD_IN_TOTO_METADATA) for
-            # coarse-grained control, and a local flag
-            # (download_in_toto_metadata) for fine-grained control (e.g.,
-            # override global flag, even when switched on, for HTML files).
-            # TODO: When it comes to HTML files, we should just verify.
-            # All other files, presumably packages, should also be
-            # inspected.
-            # TODO: Ideally, shouldn't we check that the simple index and
-            # any corresponding wheel were actually built in the same
-            # pipeline run?
-            if self.__DOWNLOAD_IN_TOTO_METADATA and \
-               download_in_toto_metadata and \
-               not target_relpath.endswith('.html'):
-                self.__download_and_verify_in_toto_metadata(updated_target,
-                                                            target_relpath)
-            else:
-                logging.warning('Switched off in-toto verification for {}'\
-                                .format(target_relpath))
+	# Next, we use in-toto to verify the supply chain of the target.
+	# NOTE: We use a flag to avoid recursively downloading in-toto
+	# metadata for in-toto metadata themselves, and so on ad infinitum.
+	# NOTE: We use a global flag (self.__DOWNLOAD_IN_TOTO_METADATA) for
+	# coarse-grained control, and a local flag
+	# (download_in_toto_metadata) for fine-grained control (e.g.,
+	# override global flag, even when switched on, for HTML files).
+	# TODO: When it comes to HTML files, we should just verify.
+	# All other files, presumably packages, should also be
+	# inspected.
+	# TODO: Ideally, shouldn't we check that the simple index and
+	# any corresponding wheel were actually built in the same
+	# pipeline run?
+	if self.__DOWNLOAD_IN_TOTO_METADATA and \
+	   download_in_toto_metadata and \
+	   not target_relpath.endswith('.html'):
+	    self.__download_and_verify_in_toto_metadata(target, target_relpath)
+	else:
+	    logging.warning('Switched off in-toto verification for {}'\
+			    .format(target_relpath))
 
         target_path = os.path.join(self.__targets_dir, target_relpath)
         return target_path
