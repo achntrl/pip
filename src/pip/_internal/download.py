@@ -379,17 +379,22 @@ class TUFDownloader:
 if 'TUF_CONFIG_FILE' in os.environ:
     import glob
     import tempfile
-    import tuf.log
-    import tuf.settings
 
-    # We *always* turn off TUF logging.
+    # We always turn off TUF logging.
+    import tuf.settings
     tuf.settings.ENABLE_FILE_LOGGING = False
     # By default, set the TUF console logging level to >= CRITICAL.
+    import tuf.log
     logging.getLogger("tuf").setLevel(logging.CRITICAL)
-    # Also set non-verbose, quiet in-toto logging.
-    logging.getLogger("in_toto").setLevelVerboseOrQuiet(False, True)
+
+    # Import what we need from TUF.
     from tuf.client.updater import Updater
 
+    # Also set non-verbose, quiet in-toto logging.
+    import in_toto.log
+    logging.getLogger("in_toto").setLevelVerboseOrQuiet(False, True)
+
+    # Import what we need from in-toto.
     from in_toto import verifylib
     from in_toto.models.metadata import Metablock
     from in_toto.util import import_public_keys_from_files_as_dict
