@@ -389,9 +389,7 @@ if 'TUF_CONFIG_FILE' in os.environ:
     # You may turn toggle this behaviour using the "enable_logging" flag in the
     # TUF configuration file.
     tuf.settings.ENABLE_FILE_LOGGING = False
-    tuf.log._DEFAULT_LOG_LEVEL = logging.WARNING
-    tuf.log._DEFAULT_CONSOLE_LOG_LEVEL = logging.WARNING
-    tuf.log.remove_console_handler()
+    logging.getLogger("tuf").setLevel(logging.WARNING)
     from tuf.client.updater import Updater
 
     from in_toto import verifylib
