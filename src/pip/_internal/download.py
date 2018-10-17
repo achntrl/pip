@@ -139,11 +139,8 @@ class TUFDownloader:
                          os.environ.get('TUF_ENABLE_LOGGING', False)
 
         if enable_logging:
-            # https://github.com/theupdateframework/tuf/pull/749
-            log_filename = os.path.join(tuf.settings.repositories_directory,
-                                        tuf_config['repository_dir'],
-                                        'tuf.log')
-            tuf.log.enable_file_logging(log_filename)
+            # NOTE: Also set TUF output to DEBUG and above.
+            logging.getLogger("tuf").setLevel(logging.DEBUG)
 
             # Also set verbose, non-quiet in-toto logging.
             # https://github.com/in-toto/in-toto/blob/8eb8eab8c94f47e67a24b5e7d56f4519092dd9d2/in_toto/in_toto_verify.py#L205
@@ -290,7 +287,7 @@ class TUFDownloader:
                 params = self.__substitute_parameters(target_relpath)
                 verifylib.in_toto_verify(layout, layout_key_dict,
                                          substitution_parameters=params)
-                logging.info('E2E verified {}'.format(target_relpath))
+                logger.info('in-toto verified {}'.format(target_relpath))
         except:
             logger.exception('in-toto failed to verify {}'\
                              .format(target_relpath))
@@ -326,9 +323,7 @@ class TUFDownloader:
 
         # Either the target has not been updated...
         if not len(updated_targets):
-            logger.info('{} has not been updated'\
-                        .format(target_relpath))
-
+            logger.debug('{} has not been updated'.format(target_relpath))
         # or, it has been updated, in which case...
         else:
             # First, we use TUF to download and verify the target.
@@ -336,6 +331,8 @@ class TUFDownloader:
             updated_target = updated_targets[0]
 	    assert updated_target == target
             self.__updater.download_target(updated_target, self.__targets_dir)
+
+        logger.info('TUF verified {}'.format(target_relpath))
 
 	# Next, we use in-toto to verify the supply chain of the target.
 	# NOTE: We use a flag to avoid recursively downloading in-toto
@@ -355,8 +352,8 @@ class TUFDownloader:
 	   not target_relpath.endswith('.html'):
 	    self.__download_and_verify_in_toto_metadata(target, target_relpath)
 	else:
-	    logging.warning('Switched off in-toto verification for {}'\
-			    .format(target_relpath))
+	    logger.warning('Switched off in-toto verification for {}'\
+			   .format(target_relpath))
 
         target_path = os.path.join(self.__targets_dir, target_relpath)
         return target_path
@@ -382,14 +379,22 @@ class TUFDownloader:
 if 'TUF_CONFIG_FILE' in os.environ:
     import glob
     import tempfile
-    import tuf.settings
 
-    # NOTE: By default, we turn off TUF logging, and use the pip log instead.
-    # You may turn toggle this behaviour using the "enable_logging" flag in the
-    # TUF configuration file.
+    # We always turn off TUF logging.
+    import tuf.settings
     tuf.settings.ENABLE_FILE_LOGGING = False
+    # By default, set the TUF console logging level to >= CRITICAL.
+    import tuf.log
+    logging.getLogger("tuf").setLevel(logging.CRITICAL)
+
+    # Import what we need from TUF.
     from tuf.client.updater import Updater
 
+    # Also set non-verbose, quiet in-toto logging.
+    import in_toto.log
+    logging.getLogger("in_toto").setLevelVerboseOrQuiet(False, True)
+
+    # Import what we need from in-toto.
     from in_toto import verifylib
     from in_toto.models.metadata import Metablock
     from in_toto.util import import_public_keys_from_files_as_dict
