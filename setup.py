@@ -101,7 +101,7 @@ setup(
             "enum34==1.1.6",
             "ipaddress==1.0.22",
             "pycparser==2.18",
-            "requests==2.19.1",
+            "requests==2.20.0",
             "six==1.11.0",
         ]
     },
