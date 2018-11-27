@@ -334,19 +334,19 @@ class TUFDownloader:
 
         logger.info('TUF verified {}'.format(target_relpath))
 
-	# Next, we use in-toto to verify the supply chain of the target.
-	# NOTE: We use a flag to avoid recursively downloading in-toto
-	# metadata for in-toto metadata themselves, and so on ad infinitum.
-	# NOTE: We use a global flag (self.__DOWNLOAD_IN_TOTO_METADATA) for
-	# coarse-grained control, and a local flag
-	# (download_in_toto_metadata) for fine-grained control (e.g.,
-	# override global flag, even when switched on, for HTML files).
-	# TODO: When it comes to HTML files, we should just verify.
-	# All other files, presumably packages, should also be
-	# inspected.
-	# TODO: Ideally, shouldn't we check that the simple index and
-	# any corresponding wheel were actually built in the same
-	# pipeline run?
+        # Next, we use in-toto to verify the supply chain of the target.
+        # NOTE: We use a flag to avoid recursively downloading in-toto
+        # metadata for in-toto metadata themselves, and so on ad infinitum.
+        # NOTE: We use a global flag (self.__DOWNLOAD_IN_TOTO_METADATA) for
+        # coarse-grained control, and a local flag
+        # (download_in_toto_metadata) for fine-grained control (e.g.,
+        # override global flag, even when switched on, for HTML files).
+        # TODO: When it comes to HTML files, we should just verify.
+        # All other files, presumably packages, should also be
+        # inspected.
+        # TODO: Ideally, shouldn't we check that the simple index and
+        # any corresponding wheel were actually built in the same
+        # pipeline run?
         if self.__DOWNLOAD_IN_TOTO_METADATA and \
            download_in_toto_metadata and \
            not target_relpath.endswith('.html'):
