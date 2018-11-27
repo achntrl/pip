@@ -329,7 +329,7 @@ class TUFDownloader:
             # First, we use TUF to download and verify the target.
             assert len(updated_targets) == 1
             updated_target = updated_targets[0]
-	    assert updated_target == target
+            assert updated_target == target
             self.__updater.download_target(updated_target, self.__targets_dir)
 
         logger.info('TUF verified {}'.format(target_relpath))
