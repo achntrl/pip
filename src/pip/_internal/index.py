@@ -129,48 +129,48 @@ def _get_html_page(link, session=None):
             url = urllib_parse.urljoin(url, 'index.html')
             logger.debug(' file: URL is directory, getting %s', url)
 
-	# NOTE: Why do this? Because pip depends on the server to redirect
-	# /simple/ to /simple/index.html, whereas TUF needs to be
-	# instructed to download specifically the later.
-	# Use target_path_patterns in TUF_CONFIG_FILE to specify URLs
-	# for simple indices, like "/simple/", or "/simple/*/".
-	# Make sure that "index.html" has not already been appended!
-	target_relpath = tuf_downloader and tuf_downloader.match(url)
-	if target_relpath:
-	    logger.debug('target_relpath: {}'.format(target_relpath))
-	    # Simple sanity check.
-	    if not target_relpath.endswith('index.html'):
-	    	target_relpath = os.path.join(target_relpath, 'index.html')
-	    	logger.debug('target_relpath: {}'.format(target_relpath))
-	    target_path = tuf_downloader._get_target(target_relpath)
-	    # Return a mock requests.Response object.
-	    resp = MockResponse()
-	    with open(target_path) as target_file:
-		resp.content = target_file.read()
-	    resp.headers = {'Content-Type': 'text/html'}
-	    resp.url = url
-	else:
-	    resp = session.get(
-		url,
-		headers={
-		    "Accept": "text/html",
-		    # We don't want to blindly returned cached data for
-		    # /simple/, because authors generally expecting that
-		    # twine upload && pip install will function, but if
-		    # they've done a pip install in the last ~10 minutes
-		    # it won't. Thus by setting this to zero we will not
-		    # blindly use any cached data, however the benefit of
-		    # using max-age=0 instead of no-cache, is that we will
-		    # still support conditional requests, so we will still
-		    # minimize traffic sent in cases where the page hasn't
-		    # changed at all, we will just always incur the round
-		    # trip for the conditional GET now instead of only
-		    # once per 10 minutes.
-		    # For more information, please see pypa/pip#5670.
-		    "Cache-Control": "max-age=0",
-		},
-	    )
-	    resp.raise_for_status()
+        # NOTE: Why do this? Because pip depends on the server to redirect
+        # /simple/ to /simple/index.html, whereas TUF needs to be
+        # instructed to download specifically the later.
+        # Use target_path_patterns in TUF_CONFIG_FILE to specify URLs
+        # for simple indices, like "/simple/", or "/simple/*/".
+        # Make sure that "index.html" has not already been appended!
+        target_relpath = tuf_downloader and tuf_downloader.match(url)
+        if target_relpath:
+            logger.debug('target_relpath: {}'.format(target_relpath))
+            # Simple sanity check.
+            if not target_relpath.endswith('index.html'):
+                target_relpath = os.path.join(target_relpath, 'index.html')
+                logger.debug('target_relpath: {}'.format(target_relpath))
+            target_path = tuf_downloader._get_target(target_relpath)
+            # Return a mock requests.Response object.
+            resp = MockResponse()
+            with open(target_path) as target_file:
+                resp.content = target_file.read()
+            resp.headers = {'Content-Type': 'text/html'}
+            resp.url = url
+        else:
+            resp = session.get(
+                url,
+                headers={
+                    "Accept": "text/html",
+                    # We don't want to blindly returned cached data for
+                    # /simple/, because authors generally expecting that
+                    # twine upload && pip install will function, but if
+                    # they've done a pip install in the last ~10 minutes
+                    # it won't. Thus by setting this to zero we will not
+                    # blindly use any cached data, however the benefit of
+                    # using max-age=0 instead of no-cache, is that we will
+                    # still support conditional requests, so we will still
+                    # minimize traffic sent in cases where the page hasn't
+                    # changed at all, we will just always incur the round
+                    # trip for the conditional GET now instead of only
+                    # once per 10 minutes.
+                    # For more information, please see pypa/pip#5670.
+                    "Cache-Control": "max-age=0",
+                },
+            )
+            resp.raise_for_status()
 
         # The check for archives above only works if the url ends with
         # something that looks like an archive. However that is not a
