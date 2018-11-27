@@ -300,7 +300,7 @@ class TUFDownloader:
             os.chdir(prev_cwd)
 
     def __download_and_verify_in_toto_metadata(self, target, target_relpath):
-	in_toto_metadata_relpaths = self.__download_in_toto_metadata(target)
+        in_toto_metadata_relpaths = self.__download_in_toto_metadata(target)
 
         if not len(in_toto_metadata_relpaths):
             raise NoInTotoLinkMetadataFound(target_relpath)
