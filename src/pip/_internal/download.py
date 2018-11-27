@@ -347,13 +347,13 @@ class TUFDownloader:
 	# TODO: Ideally, shouldn't we check that the simple index and
 	# any corresponding wheel were actually built in the same
 	# pipeline run?
-	if self.__DOWNLOAD_IN_TOTO_METADATA and \
-	   download_in_toto_metadata and \
-	   not target_relpath.endswith('.html'):
-	    self.__download_and_verify_in_toto_metadata(target, target_relpath)
-	else:
-	    logger.warning('Switched off in-toto verification for {}'\
-			   .format(target_relpath))
+        if self.__DOWNLOAD_IN_TOTO_METADATA and \
+           download_in_toto_metadata and \
+           not target_relpath.endswith('.html'):
+            self.__download_and_verify_in_toto_metadata(target, target_relpath)
+        else:
+            logger.warning('Switched off in-toto verification for {}'\
+                           .format(target_relpath))
 
         target_path = os.path.join(self.__targets_dir, target_relpath)
         return target_path
