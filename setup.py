@@ -95,9 +95,9 @@ setup(
             # 2018), this was the latest version of the library.
             'securesystemslib [crypto, pynacl] >= 0.11.3, < 0.12',
             # Maintain harmony with Agent 6.8.0:
-            # https://github.com/DataDog/integrations-core/blob/e6ed77ea578344ed251a0839aaba9a45cdf46238/datadog_checks_base/datadog_checks/base/data/agent_requirements.in
+            # https://github.com/DataDog/integrations-core/blob/5c54b1159e71d07d109206ef392f35e1a5f8ae5d/datadog_checks_base/datadog_checks/base/data/agent_requirements.in
             "asn1crypto==0.24.0",
-            "cryptography==2.3",
+            "cryptography==2.3.1",
             "cffi==1.11.5",
             "enum34==1.1.6",
             "ipaddress==1.0.22",
