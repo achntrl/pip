@@ -104,6 +104,9 @@ setup(
             "pycparser==2.18",
             "requests==2.20.1",
             "six==1.11.0",
+            # Maintain harmony with requests:
+            # https://github.com/requests/requests/blob/57d7284c1a245cf9fbcecb594f50471d86e879f7/setup.py#L46
+            'idna==2.7',
         ]
     },
 )
