@@ -90,6 +90,8 @@ setup(
             # (0.11.x).
             'tuf >= 0.11.2.dev2, < 0.12',
             'in-toto >= 0.2.3, < 0.3',
+            # Install cffi before securesystemslib to avoid a compile error on arm
+            "cffi==1.11.5",
             # Make sure TUF and in-toto use the same version of this library,
             # which they both use in common. At the time of writing (Oct 9
             # 2018), this was the latest version of the library.
@@ -98,7 +100,6 @@ setup(
             # https://github.com/DataDog/integrations-core/blob/5c54b1159e71d07d109206ef392f35e1a5f8ae5d/datadog_checks_base/datadog_checks/base/data/agent_requirements.in
             "asn1crypto==0.24.0",
             "cryptography==2.3.1",
-            "cffi==1.11.5",
             "enum34==1.1.6",
             "ipaddress==1.0.22",
             "pycparser==2.18",
